@@ -89,4 +89,32 @@ if (!users.Any())
 //    dbContext.SaveChanges();
 //}
 
+app.MapGet("data", async (MyBoardsDbContext dbContext) =>
+{
+    //var tags = dbContext.Tags.ToList();
+    //var epic = dbContext.Epics.First();
+    //var user = dbContext.Users.FirstOrDefault(u => u.FirstName == "Stella Mann");
+    //return new { epic, user };
+
+    //var toDoWorkItems = dbContext.WorkItems.Where(i => i.StateId == 1).ToList();
+    //return new { toDoWorkItems };
+
+    //var newComments = await dbContext.Comments.Where(u => u.CreatedDate > new DateTime(2022, 7, 23)).ToListAsync();
+    //return newComments;
+
+    //var top5NewestComments = await dbContext.Comments
+    //    .OrderByDescending(c => c.CreatedDate)
+    //    .Take(5)
+    //    .ToListAsync();
+    //return new { top5NewestComments };
+
+    var stateCount = await dbContext.WorkItems
+        .GroupBy(x => x.StateId)
+        .Select(g =>
+            new { stateId = g.Key, count = g.Count() })
+        .ToListAsync();
+
+    return new { stateCount };
+});
+
 app.Run();
