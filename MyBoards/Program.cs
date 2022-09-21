@@ -108,13 +108,33 @@ app.MapGet("data", async (MyBoardsDbContext dbContext) =>
     //    .ToListAsync();
     //return new { top5NewestComments };
 
-    var stateCount = await dbContext.WorkItems
-        .GroupBy(x => x.StateId)
-        .Select(g =>
-            new { stateId = g.Key, count = g.Count() })
+    //var stateCount = await dbContext.WorkItems
+    //    .GroupBy(x => x.StateId)
+    //    .Select(g =>
+    //        new { stateId = g.Key, count = g.Count() })
+    //    .ToListAsync();
+
+    //return new { stateCount };
+
+    //var onHoldEpics = await dbContext.Epics
+    //    .Where(s => s.StateId == 4)
+    //    .OrderBy(p => p.Priority)
+    //    .ToListAsync();
+
+    //return new { onHoldEpics };
+
+    var authorCommentsCounts = await dbContext.Comments
+        .GroupBy(a => a.AuthorId)
+        .Select(g => new { g.Key, Count = g.Count() })
         .ToListAsync();
 
-    return new { stateCount };
+    var topAuthorComments = authorCommentsCounts
+            .First(a => a.Count == authorCommentsCounts
+            .Max(Comment => Comment.Count));
+
+    var userDetails = dbContext.Users.First(u => u.Id == topAuthorComments.Key);
+
+    return new { userDetails, commentCount = topAuthorComments.Count };
 });
 
 app.Run();
