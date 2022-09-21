@@ -2,6 +2,6 @@
 {
     public class Issue : WorkItem
     {
-        public decimal Effort { get; set; }
+        public decimal Efford { get; set; }
     }
 }

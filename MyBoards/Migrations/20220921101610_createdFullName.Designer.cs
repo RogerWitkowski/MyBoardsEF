@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyBoards.Data;
 
@@ -11,9 +12,10 @@ using MyBoards.Data;
 namespace MyBoards.Migrations
 {
     [DbContext(typeof(MyBoardsDbContext))]
-    partial class MyBoardsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220921101610_createdFullName")]
+    partial class createdFullName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -260,7 +262,7 @@ namespace MyBoards.Migrations
                 {
                     b.HasBaseType("MyBoards.Entites.WorkItem");
 
-                    b.Property<decimal>("Efford")
+                    b.Property<decimal>("Effort")
                         .HasColumnType("decimal(5,2)");
 
                     b.HasDiscriminator().HasValue("Issue");

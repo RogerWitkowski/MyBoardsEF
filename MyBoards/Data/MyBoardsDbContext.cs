@@ -37,13 +37,13 @@ namespace MyBoards.Data
 
             modelBuilder.Entity<Issue>(entBuilder =>
             {
-                entBuilder.Property(effort => effort.Effort).HasColumnType("decimal(5,2)");
+                entBuilder.Property(effort => effort.Efford).HasColumnType("decimal(5,2)");
             });
 
             modelBuilder.Entity<Task>(entBuilder =>
             {
                 entBuilder.Property(activity => activity.Activity).HasMaxLength(200);
-                entBuilder.Property(remainingWork => remainingWork.RemainingWork).HasPrecision(14, 2);
+                entBuilder.Property(remainingWork => remainingWork.RemaningWork).HasPrecision(14, 2);
             });
 
             //TODO: NAKLADANIE ATRYBUTOW DLA WLASCIWOSCI DANEGO OBIEKTU

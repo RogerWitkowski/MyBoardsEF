@@ -1,9 +1,18 @@
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using MyBoards.Data;
 using MyBoards.Entites;
+using Newtonsoft.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.Configure<JsonOptions>(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
+//builder.Services.AddMvc().AddNewtonsoftJson();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -37,8 +46,7 @@ if (!users.Any())
 {
     var user1 = new User()
     {
-        FirstName = "User1",
-        LastName = "UserOne",
+        FullName = "User1 UserOne",
         Email = "email111@email.com",
         Address = new Address()
         {
@@ -48,8 +56,7 @@ if (!users.Any())
     };
     var user2 = new User()
     {
-        FirstName = "User2",
-        LastName = "UserTwo",
+        FullName = "User2 UserTwo",
         Email = "email222@email.com",
         Address = new Address()
         {
@@ -135,6 +142,78 @@ app.MapGet("data", async (MyBoardsDbContext dbContext) =>
     var userDetails = dbContext.Users.First(u => u.Id == topAuthorComments.Key);
 
     return new { userDetails, commentCount = topAuthorComments.Count };
+});
+
+app.MapPost("update", async (MyBoardsDbContext dbContext) =>
+{
+    Epic epic = await dbContext.Epics.FirstAsync(epic => epic.Id == 1);
+
+    //var onHoldState = await dbContext.WorkItemStates.FirstAsync(s => s.Value == "On Hold");
+
+    //epic.StateId = onHoldState.Id;
+    //await dbContext.SaveChangesAsync();
+
+    var rejectedState = await dbContext.WorkItemStates.FirstAsync(s => s.Value == "Rejected");
+
+    epic.State = rejectedState;
+    await dbContext.SaveChangesAsync();
+
+    //epic.Area = "Updated area";
+    //epic.Priority = 1;
+    //epic.StartDate = DateTime.Now;
+    //epic.StateId = 1;
+
+    //await dbContext.SaveChangesAsync();
+
+    return epic;
+});
+
+app.MapPost("create", async (MyBoardsDbContext dbContext) =>
+{
+    //Tag mvcTag = new Tag()
+    //{
+    //    Value = "MVC"
+    //};
+    //Tag aspTag = new Tag()
+    //{
+    //    Value = "ASP"
+    //};
+
+    //var tags = new List<Tag>() { mvcTag, aspTag };
+
+    //await dbContext.AddAsync(tag);
+    //await dbContext.Tags.AddAsync(tag);
+    //await dbContext.AddRangeAsync(tags);
+
+    var address = new Address()
+    {
+        City = "Warszawa",
+        Country = "Polska",
+        Street = "Piwna",
+    };
+
+    var user = new User()
+    {
+        FullName = "Jan Kowalksi",
+        Email = "jakKowalski@gmail.com",
+        Address = address
+    };
+
+    dbContext.Users.Add(user);
+
+    await dbContext.SaveChangesAsync();
+    return user;
+});
+
+app.MapGet("userComments", async (MyBoardsDbContext dbContext) =>
+{
+    var user = await dbContext.Users
+        .Include(c => c.Comments)
+        .FirstAsync(u => u.Id == Guid.Parse("68366DBE-0809-490F-CC1D-08DA10AB0E61"));
+
+    //var userComments = await dbContext.Comments.Where(c => c.AuthorId == user.Id).ToListAsync();
+
+    return user;
 });
 
 app.Run();

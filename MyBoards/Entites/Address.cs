@@ -1,4 +1,6 @@
-﻿namespace MyBoards.Entites
+﻿using Newtonsoft.Json;
+
+namespace MyBoards.Entites
 {
     public class Address
     {

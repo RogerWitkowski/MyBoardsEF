@@ -3,6 +3,6 @@
     public class Task : WorkItem
     {
         public string Activity { get; set; }
-        public decimal RemainingWork { get; set; }
+        public decimal RemaningWork { get; set; }
     }
 }
