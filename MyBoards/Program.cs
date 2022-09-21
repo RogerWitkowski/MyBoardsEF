@@ -208,12 +208,48 @@ app.MapPost("create", async (MyBoardsDbContext dbContext) =>
 app.MapGet("userComments", async (MyBoardsDbContext dbContext) =>
 {
     var user = await dbContext.Users
-        .Include(c => c.Comments)
+        .Include(c => c.Comments).ThenInclude(w => w.WorkItem)
+        .Include(a => a.Address)
         .FirstAsync(u => u.Id == Guid.Parse("68366DBE-0809-490F-CC1D-08DA10AB0E61"));
 
     //var userComments = await dbContext.Comments.Where(c => c.AuthorId == user.Id).ToListAsync();
 
     return user;
+});
+
+app.MapDelete("delete", async (MyBoardsDbContext dbContext) =>
+{
+    var workItemTags = await dbContext.WorkItemTag.Where(i => i.WorkItemId == 12).ToListAsync();
+    dbContext.WorkItemTag.RemoveRange(workItemTags);
+
+    var workItem = await dbContext.WorkItems.FirstAsync(i => i.Id == 16);
+    dbContext.RemoveRange(workItem);
+
+    await dbContext.SaveChangesAsync();
+});
+
+app.MapDelete("deleteUser", async (MyBoardsDbContext dbContext) =>
+{
+    var user = await dbContext.Users
+        .FirstAsync(i => i.Id == Guid.Parse("DC231ACF-AD3C-445D-CC08-08DA10AB0E61"));
+
+    var userComments = await dbContext.Comments.Where(c => c.AuthorId == user.Id).ToListAsync();
+
+    dbContext.RemoveRange(userComments);
+    await dbContext.SaveChangesAsync();
+
+    dbContext.Users.Remove(user);
+    await dbContext.SaveChangesAsync();
+});
+
+app.MapDelete("deleteUserClientCascade", async (MyBoardsDbContext dbContext) =>
+{
+    var user = await dbContext.Users
+        .Include(c => c.Comments)
+        .FirstAsync(i => i.Id == Guid.Parse("4C081D84-C565-4327-CBCB-08DA10AB0E61"));
+
+    dbContext.Remove(user);
+    await dbContext.SaveChangesAsync();
 });
 
 app.Run();

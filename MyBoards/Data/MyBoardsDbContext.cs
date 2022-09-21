@@ -20,6 +20,7 @@ namespace MyBoards.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<WorkItemState> WorkItemStates { get; set; }
+        public DbSet<WorkItemTag> WorkItemTag { get; set; }
 
         //TODO: TWORZENIE  KLUCZA GLOWNEGO ZLOZONEGO Z 2 WLASCIWOSCI KLASY
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -87,9 +88,10 @@ namespace MyBoards.Data
                 entBuild.Property(createdDate => createdDate.CreatedDate).HasDefaultValueSql("getutcdate()");
                 entBuild.Property(updatedDate => updatedDate.UpdatedDate).ValueGeneratedOnUpdate();
 
-                entBuild.HasOne(author => author.Author).WithMany(comments => comments.Comments)
+                entBuild.HasOne(author => author.Author)
+                    .WithMany(comments => comments.Comments)
                     .HasForeignKey(comment => comment.AuthorId)
-                    .OnDelete(DeleteBehavior.NoAction);
+                    .OnDelete(DeleteBehavior.ClientCascade);
             });
 
             modelBuilder.Entity<User>()
