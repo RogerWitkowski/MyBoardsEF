@@ -252,4 +252,64 @@ app.MapDelete("deleteUserClientCascade", async (MyBoardsDbContext dbContext) =>
     await dbContext.SaveChangesAsync();
 });
 
+app.MapGet("dataCheckTracking", async (MyBoardsDbContext dbContext) =>
+{
+    var user = await dbContext.Users
+        .FirstAsync(i => i.Id == Guid.Parse("D00D8059-8977-4E5F-CBD2-08DA10AB0E61"));
+
+    var trackedEntries1 = dbContext.ChangeTracker.Entries();
+
+    user.Email = "test@gmail.com";
+
+    var trackedEntries2 = dbContext.ChangeTracker.Entries();
+
+    await dbContext.SaveChangesAsync();
+    return user;
+});
+
+app.MapGet("dataCheckTrackingDel", async (MyBoardsDbContext dbContext) =>
+{
+    var user = await dbContext.Users
+        .FirstAsync(u => u.Id == Guid.Parse("CA5E3E47-EC21-4DDB-CC1B-08DA10AB0E61"));
+
+    dbContext.Users.Remove(user);
+
+    var newUser = new User()
+    {
+        FullName = "New User"
+    };
+
+    await dbContext.Users.AddAsync(newUser);
+
+    var trackedEntries3 = dbContext.ChangeTracker.Entries();
+
+    await dbContext.SaveChangesAsync();
+});
+
+app.MapGet("removeWorkItemwithNoSelectQuery", async (MyBoardsDbContext dbContext) =>
+{
+    var workItem = new Epic()
+    {
+        Id = 2
+    };
+
+    var entry = dbContext.Attach(workItem);
+    entry.State = EntityState.Deleted;
+
+    await dbContext.SaveChangesAsync();
+
+    return workItem;
+});
+
+app.MapGet("workItemStateAsNoTracking", async (MyBoardsDbContext dbContext) =>
+{
+    var workItemsState = await dbContext.WorkItemStates
+        .AsNoTracking()
+        .ToListAsync();
+
+    var entries11 = dbContext.ChangeTracker.Entries();
+
+    return workItemsState;
+});
+
 app.Run();
