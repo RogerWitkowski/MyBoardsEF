@@ -312,4 +312,28 @@ app.MapGet("workItemStateAsNoTracking", async (MyBoardsDbContext dbContext) =>
     return workItemsState;
 });
 
+app.MapGet("rawSqlQuery", async (MyBoardsDbContext dbContext) =>
+{
+    var minWorkItemsCount = "85";
+
+    var workItemStates = await dbContext.WorkItemStates
+        .FromSqlInterpolated($@"
+    SELECT wis.Id, wis.Value
+    FROM [MyBoardEF_DB].[dbo].[WorkItemStates] wis
+    JOIN WorkItems wi on wi.StateId = wis.Id
+    GROUP BY wis.Id, wis.Value
+    HAVING COUNT(*) > + {minWorkItemsCount}"
+        )
+        .ToListAsync();
+
+
+    dbContext.Database.ExecuteSqlRaw(@"
+UPDATE Comments
+SET UpdatedDate = GETDATE()
+WHERE AuthorId = '9A8E164A-F3C2-40C3-CBCD-08DA10AB0E61'
+");
+
+    return workItemStates;
+});
+
 app.Run();
