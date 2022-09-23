@@ -1,3 +1,4 @@
+using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.EntityFrameworkCore;
@@ -326,7 +327,6 @@ app.MapGet("rawSqlQuery", async (MyBoardsDbContext dbContext) =>
         )
         .ToListAsync();
 
-
     dbContext.Database.ExecuteSqlRaw(@"
 UPDATE Comments
 SET UpdatedDate = GETDATE()
@@ -334,6 +334,11 @@ WHERE AuthorId = '9A8E164A-F3C2-40C3-CBCD-08DA10AB0E61'
 ");
 
     return workItemStates;
+});
+app.MapGet("top5Authors", async (MyBoardsDbContext dbContext) =>
+{
+    var top5Authors = await dbContext.ViewTopAuthor.ToListAsync();
+    return top5Authors;
 });
 
 app.Run();

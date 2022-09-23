@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyBoards.Entites;
+using MyBoards.Entites.ViewModels;
 using Task = MyBoards.Entites.Task;
 
 namespace MyBoards.Data
@@ -11,6 +12,7 @@ namespace MyBoards.Data
         {
         }
 
+        public DbSet<TopAuthor> ViewTopAuthor { get; set; }
         public DbSet<WorkItem> WorkItems { get; set; }
         public DbSet<Epic> Epics { get; set; }
         public DbSet<Issue> Issues { get; set; }
@@ -116,6 +118,12 @@ namespace MyBoards.Data
                     new Tag() { Id = 4, Value = "API" },
                     new Tag() { Id = 5, Value = "Service" }
                 );
+            });
+
+            modelBuilder.Entity<TopAuthor>(entBuild =>
+            {
+                entBuild.ToView("View_TopAuthors");
+                entBuild.HasNoKey();
             });
         }
     }
