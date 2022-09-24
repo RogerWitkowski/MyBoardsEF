@@ -28,7 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyBoardsDbContext>(options =>
 {
-    //options.UseLazyLoadingProxies();
+    options.UseLazyLoadingProxies();
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyBoardsSQLConnection"));
 });
 
@@ -417,6 +417,21 @@ app.MapGet("dataSelectOperator", async (MyBoardsDbContext dbContext) =>
     //var comments = users.SelectMany(u => u.comments).Select(c => c.Message);
 
     return usersComments;
+});
+
+app.MapGet("dataLazyLoading", async (MyBoardsDbContext dbContext) =>
+{
+    var users = await dbContext.Users
+        .Where(u => u.Address.Country == "Albania")
+        .Include(u => u.Comments)
+        .ToListAsync();
+
+    foreach (var user in users)
+    {
+        foreach (var comment in user.Comments)
+        {
+        }
+    }
 });
 
 app.Run();
