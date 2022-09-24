@@ -1,25 +1,30 @@
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards.Data;
 using MyBoards.Entites;
 using Newtonsoft.Json;
+using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    //options.SerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
 });
 
 //builder.Services.AddMvc().AddNewtonsoftJson();
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyBoardsDbContext>(options =>
 {
+    options.UseLazyLoadingProxies();
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyBoardsSQLConnection"));
 });
 
@@ -208,14 +213,22 @@ app.MapPost("create", async (MyBoardsDbContext dbContext) =>
 
 app.MapGet("userComments", async (MyBoardsDbContext dbContext) =>
 {
+    var withAddress = true;
+
     var user = await dbContext.Users
-        .Include(c => c.Comments).ThenInclude(w => w.WorkItem)
-        .Include(a => a.Address)
+        //.Include(c => c.Comments).ThenInclude(w => w.WorkItem)
+        //.Include(a => a.Address)
         .FirstAsync(u => u.Id == Guid.Parse("68366DBE-0809-490F-CC1D-08DA10AB0E61"));
+
+    if (withAddress)
+    {
+        var result = new { FullName = user.FullName, Address = $"{user.Address.Street} {user.Address.City}" };
+        return result;
+    }
 
     //var userComments = await dbContext.Comments.Where(c => c.AuthorId == user.Id).ToListAsync();
 
-    return user;
+    return new { FullName = user.FullName, Address = "-" };
 });
 
 app.MapDelete("delete", async (MyBoardsDbContext dbContext) =>
@@ -339,6 +352,11 @@ app.MapGet("top5Authors", async (MyBoardsDbContext dbContext) =>
 {
     var top5Authors = await dbContext.ViewTopAuthor.ToListAsync();
     return top5Authors;
+});
+
+app.MapGet("LatLong", async (MyBoardsDbContext dbContext) =>
+{
+    var LatFilter = dbContext.Addresses.Where(a => a.Coordinates.Latitude > 10);
 });
 
 app.Run();
