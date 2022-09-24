@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using MyBoards.Entites;
+using MyBoards.Entites.Configuration;
 using MyBoards.Entites.ViewModels;
 using Task = MyBoards.Entites.Task;
 
@@ -33,105 +34,102 @@ namespace MyBoards.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Epic>(entBuilder =>
-            {
-                entBuilder.Property(endDate => endDate.EndDate).HasPrecision(3);
-            });
+            //new AddressConfiguration().Configure(modelBuilder.Entity<Address>());
+            //!WSKAZANIE SKAD MA POBIERAC KONFIGURACJE DLA MODELI \/ - ZBIORCZA KONFIGURACJA; /\ - POJEDYNCZA KONFIGURACJA DLA KAZDEGO MODELU;
+            modelBuilder.ApplyConfigurationsFromAssembly(this.GetType().Assembly);
 
-            modelBuilder.Entity<Issue>(entBuilder =>
-            {
-                entBuilder.Property(effort => effort.Efford).HasColumnType("decimal(5,2)");
-            });
+            //modelBuilder.Entity<Epic>(entBuilder =>
+            //{
+            //    entBuilder.Property(endDate => endDate.EndDate).HasPrecision(3);
+            //});
 
-            modelBuilder.Entity<Task>(entBuilder =>
-            {
-                entBuilder.Property(activity => activity.Activity).HasMaxLength(200);
-                entBuilder.Property(remainingWork => remainingWork.RemaningWork).HasPrecision(14, 2);
-            });
+            //modelBuilder.Entity<Issue>(entBuilder =>
+            //{
+            //    entBuilder.Property(effort => effort.Efford).HasColumnType("decimal(5,2)");
+            //});
 
-            //TODO: NAKLADANIE ATRYBUTOW DLA WLASCIWOSCI DANEGO OBIEKTU
-            modelBuilder.Entity<WorkItem>(entBuild =>
-            {
-                entBuild.Property(area => area.Area).HasColumnType("varchar(200)");
-                entBuild.Property(iterationPath => iterationPath.IterationPath).HasColumnName("Iteration_Path");
+            //modelBuilder.Entity<Task>(entBuilder =>
+            //{
+            //    entBuilder.Property(activity => activity.Activity).HasMaxLength(200);
+            //    entBuilder.Property(remainingWork => remainingWork.RemaningWork).HasPrecision(14, 2);
+            //});
 
-                entBuild.Property(priority => priority.Priority).HasDefaultValue(1);
+            ////TODO: NAKLADANIE ATRYBUTOW DLA WLASCIWOSCI DANEGO OBIEKTU
+            //modelBuilder.Entity<WorkItem>(entBuild =>
+            //{
+            //    entBuild.Property(area => area.Area).HasColumnType("varchar(200)");
+            //    entBuild.Property(iterationPath => iterationPath.IterationPath).HasColumnName("Iteration_Path");
 
-                entBuild.HasMany(workItem => workItem.Comments).WithOne(comment => comment.WorkItem)
-                    .HasForeignKey(comment => comment.WorkItemId);
+            //    entBuild.Property(priority => priority.Priority).HasDefaultValue(1);
 
-                entBuild.HasOne(workItem => workItem.Author).WithMany(user => user.WorkItems)
-                    .HasForeignKey(workItem => workItem.AuthorId);
+            //    entBuild.HasMany(workItem => workItem.Comments).WithOne(comment => comment.WorkItem)
+            //        .HasForeignKey(comment => comment.WorkItemId);
 
-                entBuild.HasMany(w => w.Tags).WithMany(t => t.WorkItems)
-                    .UsingEntity<WorkItemTag>(
-                        workItemTag => workItemTag
-                            .HasOne(wit => wit.Tag)
-                            .WithMany()
-                            .HasForeignKey(wit => wit.TagId),
+            //    entBuild.HasOne(workItem => workItem.Author).WithMany(user => user.WorkItems)
+            //        .HasForeignKey(workItem => workItem.AuthorId);
 
-                        workItemTag => workItemTag
-                            .HasOne(wit => wit.WorkItem)
-                            .WithMany()
-                            .HasForeignKey(wit => wit.WorkItemId),
+            //    entBuild.HasMany(w => w.Tags).WithMany(t => t.WorkItems)
+            //        .UsingEntity<WorkItemTag>(
+            //            workItemTag => workItemTag
+            //                .HasOne(wit => wit.Tag)
+            //                .WithMany()
+            //                .HasForeignKey(wit => wit.TagId),
 
-                        workItemTag =>
-                        {
-                            workItemTag.HasKey(key => new { key.TagId, key.WorkItemId });
-                            workItemTag.Property(publicationDate => publicationDate.PublicationDate)
-                                .HasDefaultValueSql("getutcdate()");
-                        });
+            //            workItemTag => workItemTag
+            //                .HasOne(wit => wit.WorkItem)
+            //                .WithMany()
+            //                .HasForeignKey(wit => wit.WorkItemId),
 
-                entBuild.HasOne(workItem => workItem.State).WithMany().HasForeignKey(workItem => workItem.StateId);
-            });
+            //            workItemTag =>
+            //            {
+            //                workItemTag.HasKey(key => new { key.TagId, key.WorkItemId });
+            //                workItemTag.Property(publicationDate => publicationDate.PublicationDate)
+            //                    .HasDefaultValueSql("getutcdate()");
+            //            });
 
-            modelBuilder.Entity<Comment>(entBuild =>
-            {
-                entBuild.Property(createdDate => createdDate.CreatedDate).HasDefaultValueSql("getutcdate()");
-                entBuild.Property(updatedDate => updatedDate.UpdatedDate).ValueGeneratedOnUpdate();
+            //    entBuild.HasOne(workItem => workItem.State).WithMany().HasForeignKey(workItem => workItem.StateId);
+            //});
 
-                entBuild.HasOne(author => author.Author)
-                    .WithMany(comments => comments.Comments)
-                    .HasForeignKey(comment => comment.AuthorId)
-                    .OnDelete(DeleteBehavior.ClientCascade);
-            });
+            //modelBuilder.Entity<Comment>(entBuild =>
+            //{
+            //    entBuild.Property(createdDate => createdDate.CreatedDate).HasDefaultValueSql("getutcdate()");
+            //    entBuild.Property(updatedDate => updatedDate.UpdatedDate).ValueGeneratedOnUpdate();
 
-            modelBuilder.Entity<User>()
-                .HasOne(user => user.Address)
-                .WithOne(address => address.User)
-                .HasForeignKey<Address>(a => a.UserId);
+            //    entBuild.HasOne(author => author.Author)
+            //        .WithMany(comments => comments.Comments)
+            //        .HasForeignKey(comment => comment.AuthorId)
+            //        .OnDelete(DeleteBehavior.ClientCascade);
+            //});
 
-            modelBuilder.Entity<WorkItemState>(entBuild =>
-            {
-                entBuild.Property(state => state.Value).IsRequired().HasMaxLength(50);
-                entBuild.HasData(new WorkItemState() { Id = 1, Value = "To Do" },
-                    new WorkItemState() { Id = 2, Value = "Doing" },
-                    new WorkItemState() { Id = 3, Value = "Done" });
-            });
+            //modelBuilder.Entity<User>()
+            //    .HasOne(user => user.Address)
+            //    .WithOne(address => address.User)
+            //    .HasForeignKey<Address>(a => a.UserId);
 
-            modelBuilder.Entity<Tag>(entbuilder =>
-            {
-                entbuilder.HasData(
-                    new Tag() { Id = 1, Value = "Web" },
-                    new Tag() { Id = 2, Value = "UI" },
-                    new Tag() { Id = 3, Value = "Desktop" },
-                    new Tag() { Id = 4, Value = "API" },
-                    new Tag() { Id = 5, Value = "Service" }
-                );
-            });
+            //modelBuilder.Entity<WorkItemState>(entBuild =>
+            //{
+            //    entBuild.Property(state => state.Value).IsRequired().HasMaxLength(50);
+            //    entBuild.HasData(new WorkItemState() { Id = 1, Value = "To Do" },
+            //        new WorkItemState() { Id = 2, Value = "Doing" },
+            //        new WorkItemState() { Id = 3, Value = "Done" });
+            //});
 
-            modelBuilder.Entity<TopAuthor>(entBuild =>
-            {
-                entBuild.ToView("View_TopAuthors");
-                entBuild.HasNoKey();
-            });
+            //modelBuilder.Entity<Tag>(entbuilder =>
+            //{
+            //    entbuilder.HasData(
+            //        new Tag() { Id = 1, Value = "Web" },
+            //        new Tag() { Id = 2, Value = "UI" },
+            //        new Tag() { Id = 3, Value = "Desktop" },
+            //        new Tag() { Id = 4, Value = "API" },
+            //        new Tag() { Id = 5, Value = "Service" }
+            //    );
+            //});
 
-            modelBuilder.Entity<Address>()
-                .OwnsOne(a => a.Coordinates, cmb =>
-                {
-                    cmb.Property(c => c.Latitude).HasPrecision(18, 7);
-                    cmb.Property(c => c.Longitude).HasPrecision(18, 7);
-                });
+            //modelBuilder.Entity<TopAuthor>(entBuild =>
+            //{
+            //    entBuild.ToView("View_TopAuthors");
+            //    entBuild.HasNoKey();
+            //});
         }
     }
 }
