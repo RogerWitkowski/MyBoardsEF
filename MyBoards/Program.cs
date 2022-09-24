@@ -403,4 +403,20 @@ app.MapGet("pagination", async (MyBoardsDbContext dbContext) =>
     return pagedResult;
 });
 
+app.MapGet("dataSelectOperator", async (MyBoardsDbContext dbContext) =>
+{
+    var usersComments = await dbContext.Users
+        .Include(a => a.Address)
+        .Include(u => u.Comments)
+        .Where(a => a.Address.Country == "Albania")
+        .SelectMany(u => u.Comments)
+        .Select(c => c.Message)
+        //.Select(u => u.FullName)
+        .ToListAsync();
+
+    //var comments = users.SelectMany(u => u.comments).Select(c => c.Message);
+
+    return usersComments;
+});
+
 app.Run();
