@@ -28,7 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyBoardsDbContext>(options =>
 {
-    options.UseLazyLoadingProxies();
+    //options.UseLazyLoadingProxies();
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyBoardsSQLConnection"));
 });
 
@@ -423,7 +423,7 @@ app.MapGet("dataLazyLoading", async (MyBoardsDbContext dbContext) =>
 {
     var users = await dbContext.Users
         .Where(u => u.Address.Country == "Albania")
-        .Include(u => u.Comments)
+        //.Include(u => u.Comments)
         .ToListAsync();
 
     foreach (var user in users)
