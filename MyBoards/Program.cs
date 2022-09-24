@@ -1,11 +1,15 @@
+using System.Linq.Expressions;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Serialization;
+using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyBoards.Data;
+using MyBoards.DTO;
 using MyBoards.Entites;
 using Newtonsoft.Json;
+using Expression = Castle.DynamicProxy.Generators.Emitters.SimpleAST.Expression;
 using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +28,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<MyBoardsDbContext>(options =>
 {
-    options.UseLazyLoadingProxies();
+    //options.UseLazyLoadingProxies();
     options.UseSqlServer(builder.Configuration.GetConnectionString("MyBoardsSQLConnection"));
 });
 
@@ -357,6 +361,46 @@ app.MapGet("top5Authors", async (MyBoardsDbContext dbContext) =>
 app.MapGet("LatLong", async (MyBoardsDbContext dbContext) =>
 {
     var LatFilter = dbContext.Addresses.Where(a => a.Coordinates.Latitude > 10);
+});
+
+app.MapGet("pagination", async (MyBoardsDbContext dbContext) =>
+{
+    // user input
+    var filter = "a";
+    string sortBy = "FullName";
+    bool sortByDescending = false;
+    int pageNumber = 1;
+    int pageSize = 10;
+
+    var query = dbContext.Users
+        .Where(u => filter == null || (u.Email.ToLower().Contains(filter.ToLower()) ||
+                                       (u.FullName.ToLower().Contains(filter.ToLower()))));
+
+    var totalCount = query.Count();
+
+    if (sortBy != null)
+    {
+        //Expression<Func<User, object>> sortByExpression = user => user.Email;
+        var columnsSelector = new Dictionary<string, Expression<Func<User, object>>>
+        {
+            {nameof(User.Email), user => user.Email},
+            {nameof(User.FullName), user => user.FullName }
+        };
+
+        var sortByExpression = columnsSelector[sortBy];
+
+        query = sortByDescending
+            ? query.OrderByDescending(sortByExpression)
+            : query.OrderBy(sortByExpression);
+    }
+
+    var result = await query.Skip(pageSize * (pageNumber - 1))
+        .Take(pageSize)
+        .ToListAsync();
+
+    var pagedResult = new PagedResult<User>(result, totalCount, pageSize, pageNumber);
+
+    return pagedResult;
 });
 
 app.Run();
