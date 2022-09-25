@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using System.Reflection.Metadata.Ecma335;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Castle.DynamicProxy.Generators.Emitters.SimpleAST;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -8,12 +9,16 @@ using Microsoft.EntityFrameworkCore;
 using MyBoards.Data;
 using MyBoards.DTO;
 using MyBoards.Entites;
+using MyBoards.Sieve;
 using Newtonsoft.Json;
+using Sieve.Models;
+using Sieve.Services;
 using Expression = Castle.DynamicProxy.Generators.Emitters.SimpleAST.Expression;
 using JsonOptions = Microsoft.AspNetCore.Http.Json.JsonOptions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
 builder.Services.Configure<JsonOptions>(options =>
 {
     options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -50,6 +55,8 @@ if (pendingMigrations.Any())
 {
     dbContext.Database.Migrate();
 }
+
+//DataGenerator.Seed(dbContext);
 
 var users = dbContext.Users.ToList();
 if (!users.Any())
@@ -432,6 +439,33 @@ app.MapGet("dataLazyLoading", async (MyBoardsDbContext dbContext) =>
         {
         }
     }
+});
+
+app.MapPost("sieve", async ([FromBody] SieveModel query, ISieveProcessor sieveProcessor, MyBoardsDbContext dbContext) =>
+{
+    var epics = dbContext.Epics
+        .Include(e => e.Author)
+        .AsQueryable();
+
+    var dtos = await sieveProcessor
+        .Apply(query, epics)
+        .Select(e => new EpicDto()
+        {
+            Id = e.Id,
+            Area = e.Area,
+            Priority = e.Priority,
+            StartDate = e.StartDate,
+            AuthorFullName = e.Author.FullName
+        })
+        .ToListAsync();
+
+    var totalCount = await sieveProcessor
+        .Apply(query, epics, applyPagination: false, applySorting: false)
+        .CountAsync();
+
+    var result = new PagedResult<EpicDto>(dtos, totalCount, query.Page.Value, query.PageSize.Value);
+
+    return result;
 });
 
 app.Run();
